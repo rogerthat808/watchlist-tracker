@@ -90,7 +90,3 @@ watchlist-backend/
 - Do **not** re-run `schema.sql` unless you want to wipe and reset your tables.  
 - The `.env` file is excluded from version control (`.gitignore`) to protect your API key.
 
----
-
-## 📄 License
-MIT © 2025
