@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Watchlist</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 1.5rem;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    h1 {
+      margin-bottom: 0.25rem;
+      font-size: 1.7rem;
+    }
+    .hint {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 1rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    label {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    input {
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    button {
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: #0b1120;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    button:hover {
+      background: #111827;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    .btn-small {
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 999px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .card {
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      padding: 0.75rem 0.9rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.8);
+    }
+    .card h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1rem;
+    }
+    .card-sub {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      padding: 0.4rem 0.35rem;
+      text-align: right;
+      border-bottom: 1px solid #111827;
+      white-space: nowrap;
+    }
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+    th:last-child,
+    td:last-child {
+      text-align: center;
+    }
+    th {
+      font-weight: 500;
+      color: #9ca3af;
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:nth-child(even) td {
+      background: #020617;
+    }
+    tr:nth-child(odd) td {
+      background: #020617;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .badge-up {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ade80;
+    }
+    .badge-down {
+      background: rgba(248, 113, 113, 0.16);
+      color: #fca5a5;
+    }
+    .badge-flat {
+      background: rgba(148, 163, 184, 0.16);
+      color: #9ca3af;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-right: 0.3rem;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+    .summary-item-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+    .summary-item-value {
+      font-size: 1rem;
+    }
+    .summary-positive {
+      color: #4ade80;
+    }
+    .summary-negative {
+      color: #f97373;
+    }
+    .summary-neutral {
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Watchlist Performance</h1>
+
+  <div class="controls">
+    <label>
+      Watchlist ID:
+      <input id="watchlistId" type="number" value="1" style="width: 64px;" />
+    </label>
+
+    <input id="symbolInput" placeholder="Ticker (e.g. AAPL)" />
+
+    <button id="addBtn">Add symbol</button>
+    <button id="loadItemsBtn">Load items</button>
+    <button id="perfBtn">Load performance</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <div class="layout">
+    <div class="card">
+      <h2>Watchlist</h2>
+      <div class="card-sub" id="listSubtitle">Symbols you never bought… yet.</div>
+      <div style="max-height: 60vh; overflow: auto;">
+        <table id="table">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Summary</h2>
+      <div class="card-sub">
+        Quick stats for this watchlist. Use the controls above or
+        <code>api.*</code> from the console for deeper debugging.
+      </div>
+      <div id="summaryContent">
+        <div class="summary-item-label">No data loaded yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tableHeadEl = document.getElementById("tableHead");
+    const tableBodyEl = document.getElementById("tableBody");
+    const summaryEl = document.getElementById("summaryContent");
+    const symbolInput = document.getElementById("symbolInput");
+    const watchlistInput = document.getElementById("watchlistId");
+    const listSubtitle = document.getElementById("listSubtitle");
+
+    function getWatchlistId() {
+      return Number(watchlistInput.value || 1);
+    }
+
+    function setSubtitle(text) {
+      listSubtitle.textContent = text;
+    }
+
+    function clearView() {
+      tableHeadEl.innerHTML = "";
+      tableBodyEl.innerHTML = "";
+      summaryEl.innerHTML =
+        '<div class="summary-item-label">No data loaded yet.</div>';
+    }
+
+    function formatCurrency(n) {
+      if (n == null || isNaN(n)) return "-";
+      return "$" + Number(n).toFixed(2);
+    }
+
+    function formatPct(n) {
+      if (n == null || isNaN(n)) return "-";
+      return Number(n).toFixed(2) + "%";
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "-";
+      const d = new Date(iso);
+      return d.toLocaleString();
+    }
+
+    function pctClass(p) {
+      if (p == null || isNaN(p)) return "badge-flat";
+      if (p > 0) return "badge-up";
+      if (p < 0) return "badge-down";
+      return "badge-flat";
+    }
+
+    function renderItems(items) {
+      clearView();
+      setSubtitle(`Watchlist ${getWatchlistId()} · Stored snapshot prices`);
+
+      if (!items || items.length === 0) {
+        tableBodyEl.innerHTML =
+          '<tr><td colspan="4" style="text-align:center; padding:0.75rem; color:#6b7280;">No symbols in this watchlist yet.</td></tr>';
+        tableHeadEl.innerHTML = `
+          <tr>
+            <th>Symbol</th>
+            <th>Initial price</th>
+            <th>Added at</th>
+            <th>Actions</th>
+          </tr>`;
+        return;
+      }
+
+      tableHeadEl.innerHTML = `
+        <tr>
+          <th>Symbol</th>
+          <th>Initial price</th>
+          <th>Added at</th>
+          <th>Actions</th>
+        </tr>`;
+
+      tableBodyEl.innerHTML = items
+        .map((item) => {
+          const price = formatCurrency(item.initial_price);
+          const added = formatDate(item.added_at);
+          return `
+            <tr data-item-id="${item.id}">
+              <td>${item.symbol}</td>
+              <td>${price}</td>
+              <td>${added}</td>
+              <td>
+                <button class="btn-small row-delete" data-id="${item.id}">Delete</button>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      summaryEl.innerHTML = `
+        <div class="summary-grid">
+          <div>
+            <div class="summary-item-label">Total symbols</div>
+            <div class="summary-item-value summary-neutral">${items.length}</div>
+          </div>
+          <div>
+            <div class="summary-item-label">Most recent add</div>
+            <div class="summary-item-value summary-neutral">
+              ${formatDate(items[items.length - 1].added_at)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPerformance(data) {
+      clearView();
+      setSubtitle(`Watchlist ${data.watchlist_id} · Live performance vs stored price`);
+
+      const items = data.items || [];
+
+      tableHeadEl.innerHTML = `
+        <tr>
+          <th>Symbol</th>
+          <th>Initial</th>
+          <th>Current</th>
+          <th>Δ $</th>
+          <th>Δ %</th>
+          <th>Actions</th>
+        </tr>`;
+
+      if (items.length === 0) {
+        tableBodyEl.innerHTML =
+          '<tr><td colspan="6" style="text-align:center; padding:0.75rem; color:#6b7280;">No symbols in this watchlist yet.</td></tr>';
+      } else {
+        tableBodyEl.innerHTML = items
+          .map((item) => {
+            const abs = item.abs_change ?? (item.current_price - item.initial_price);
+            const pct =
+              item.pct_change ??
+              (item.initial_price
+                ? (abs / item.initial_price) * 100
+                : null);
+
+            return `
+              <tr data-item-id="${item.id}">
+                <td>${item.symbol}</td>
+                <td>${formatCurrency(item.initial_price)}</td>
+                <td>${formatCurrency(item.current_price)}</td>
+                <td>${formatCurrency(abs)}</td>
+                <td>
+                  <span class="badge ${pctClass(pct)}">
+                    ${formatPct(pct)}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-small row-delete" data-id="${item.id}">Delete</button>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+
+      const avg = data.summary?.avg_pct_change ?? null;
+      const cls =
+        avg == null || isNaN(avg)
+          ? "summary-neutral"
+          : avg > 0
+          ? "summary-positive"
+          : avg < 0
+          ? "summary-negative"
+          : "summary-neutral";
+
+      summaryEl.innerHTML = `
+        <div class="summary-grid">
+          <div>
+            <div class="summary-item-label">Total symbols</div>
+            <div class="summary-item-value summary-neutral">${items.length}</div>
+          </div>
+          <div>
+            <div class="summary-item-label">Average return</div>
+            <div class="summary-item-value ${cls}">
+              ${avg == null || isNaN(avg) ? "-" : formatPct(avg)}
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:0.5rem;">
+          <span class="pill">Green = gain</span>
+          <span class="pill">Red = loss</span>
+        </div>
+      `;
+    }
+
+    async function apiFetch(path, options = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(
+          `HTTP ${res.status}: ${res.statusText} - ` + JSON.stringify(errBody)
+        );
+      }
+      return res.json();
+    }
+
+    // ---------- window.api helpers (for console) ----------
+
+    const api = {
+      async addSymbol(symbol) {
+        const watchlistId = getWatchlistId();
+        const data = await apiFetch(`/watchlists/${watchlistId}/items`, {
+          method: "POST",
+          body: JSON.stringify({ symbol }),
+        });
+        // after adding, refresh items
+        await api.getItems();
+        return data;
+      },
+
+      async getItems() {
+        const watchlistId = getWatchlistId();
+        const data = await apiFetch(`/watchlists/${watchlistId}/items`);
+        renderItems(data);
+        return data;
+      },
+
+      async getPerformance() {
+        const watchlistId = getWatchlistId();
+        const data = await apiFetch(
+          `/watchlists/${watchlistId}/performance`
+        );
+        renderPerformance(data);
+        return data;
+      },
+
+      async deleteItem(itemId) {
+        const watchlistId = getWatchlistId();
+        const data = await apiFetch(
+          `/watchlists/${watchlistId}/items/${itemId}`,
+          { method: "DELETE" }
+        );
+        // refresh items after delete
+        await api.getItems();
+        return data;
+      },
+
+      async createWatchlist(name) {
+        const data = await apiFetch("/watchlists", {
+          method: "POST",
+          body: JSON.stringify({ name }),
+        });
+        return data;
+      },
+
+      async listWatchlists() {
+        const data = await apiFetch("/watchlists");
+        return data;
+      },
+
+      clear() {
+        clearView();
+      },
+    };
+
+    window.api = api;
+
+    // ---------- Button wiring ----------
+
+    document.getElementById("addBtn").addEventListener("click", async () => {
+      const symbol = symbolInput.value.trim().toUpperCase();
+      if (!symbol) return;
+      try {
+        await api.addSymbol(symbol);
+        symbolInput.value = "";
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    document
+      .getElementById("loadItemsBtn")
+      .addEventListener("click", async () => {
+        try {
+          await api.getItems();
+        } catch (err) {
+          console.error(err);
+        }
+      });
+
+    document.getElementById("perfBtn").addEventListener("click", async () => {
+      try {
+        await api.getPerformance();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      api.clear();
+    });
+
+    // Row-level delete button handler (event delegation)
+    tableBodyEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".row-delete");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      if (!id) return;
+      try {
+        await api.deleteItem(id);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Load items on first open
+    api.getItems().catch(() => {});
+  </script>
+</body>
+</html>
