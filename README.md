@@ -17,7 +17,7 @@ The app uses the [Finnhub API](https://finnhub.io) to fetch real-time market dat
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/watchlist-tracker.git
+git clone https://github.com/rogerthat808/watchlist-tracker.git
 cd watchlist-tracker
 ```
 
